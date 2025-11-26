@@ -1,0 +1,302 @@
+/* Main Container */
+.hr-page-background {
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  padding: 20px;
+}
+
+.hr-main-card {
+  border-radius: 15px;
+  border: none;
+}
+
+/* Header */
+.hr-header-title {
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* Tabs */
+.hr-tabs {
+  border-bottom: 2px solid #667eea;
+}
+
+.hr-tab-button {
+  font-weight: 600;
+  border: none;
+}
+
+.hr-tab-button.active {
+  color: #667eea;
+  border-bottom: 3px solid #667eea;
+}
+
+.hr-tab-button:not(.active) {
+  color: #6c757d;
+}
+
+/* Dashboard Stats Cards */
+.hr-stat-card-1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px;
+  border: none;
+}
+
+.hr-stat-card-2 {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border-radius: 15px;
+  border: none;
+}
+
+.hr-stat-card-3 {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+  border-radius: 15px;
+  border: none;
+}
+
+.hr-stat-card-4 {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #333;
+  border-radius: 15px;
+  border: none;
+}
+
+.hr-stat-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+/* Activity & Top Employee Cards */
+.hr-activity-card {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.hr-card-header {
+  background: #f8f9fa;
+  border-radius: 15px 15px 0 0;
+}
+
+/* Activity Badges */
+.hr-activity-badge {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Top Employee Rank Badges */
+.hr-rank-badge {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.hr-rank-badge.rank-1 {
+  opacity: 1;
+}
+
+.hr-rank-badge.rank-2 {
+  opacity: 1;
+}
+
+.hr-rank-badge.rank-3 {
+  opacity: 0.6;
+}
+
+.hr-employee-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.hr-salary-text {
+  color: #667eea;
+}
+
+/* Search & Filter Inputs */
+.hr-search-icon {
+  background: white;
+  border: 1px solid #dee2e6;
+}
+
+.hr-filter-input {
+  border: 1px solid #dee2e6;
+}
+
+.hr-add-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+}
+
+/* Tables */
+.hr-table-wrapper {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.hr-table {
+  background: white;
+}
+
+.hr-table-header {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  z-index: 10;
+}
+
+.hr-table-header th {
+  padding: 15px;
+}
+
+.hr-table-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.hr-table-cell {
+  padding: 15px;
+}
+
+.hr-table-cell-bold {
+  padding: 15px;
+  font-weight: 600;
+}
+
+/* Employee Table Specific */
+.hr-employee-avatar-table {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 2px solid #667eea;
+}
+
+.hr-employee-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.hr-employee-date {
+  color: #999;
+}
+
+.hr-employee-id {
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* Badges */
+.hr-badge-position {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.hr-badge-hours {
+  background: #f3e5f5;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: inline-block;
+  font-weight: 600;
+  color: #7b1fa2;
+}
+
+.hr-badge-shift-hours {
+  background: #fff3cd;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: inline-block;
+  font-weight: 600;
+  color: #856404;
+}
+
+.hr-badge-attendance-hours {
+  background: #e8f5e8;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: inline-block;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.hr-badge-role {
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.hr-badge-shift {
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.hr-badge-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+/* Salary Display */
+.hr-salary-base {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.hr-salary-bonus {
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.hr-salary-total {
+  font-weight: 700;
+  color: #ff6b6b;
+  font-size: 16px;
+}
+
+/* Action Buttons */
+.hr-action-button {
+  border-radius: 8px;
+}
+
+/* Modal */
+.hr-modal-backdrop {
+  background: rgba(0,0,0,0.5);
+}
+
+.hr-modal-content {
+  border-radius: 15px;
+  border: none;
+}
+
+.hr-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+}
+
+.hr-modal-body {
+  padding: 1.5rem;
+}
+
+.hr-form-label {
+  font-weight: bold;
+}
+
+.hr-modal-submit-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}

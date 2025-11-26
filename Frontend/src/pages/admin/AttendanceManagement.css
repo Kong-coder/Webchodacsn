@@ -1,0 +1,214 @@
+.attendance-management {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 30px 0;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #333;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  font-size: 18px;
+  color: #666;
+}
+
+.attendance-list-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.attendance-list-card .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.attendance-list-card .card-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-filter label {
+  margin: 0;
+  font-weight: 500;
+}
+
+.date-filter .form-control {
+  width: auto;
+  min-width: 160px;
+}
+
+.attendance-list-card .card-body {
+  padding: 30px;
+}
+
+.attendance-stats {
+  display: flex;
+  justify-content: space-around;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: #999;
+}
+
+.attendance-table {
+  margin: 0;
+}
+
+.attendance-table thead {
+  background: #f8f9fa;
+}
+
+.attendance-table th {
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+  padding: 15px;
+}
+
+.attendance-table td {
+  padding: 15px;
+  vertical-align: middle;
+}
+
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.employee-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.time-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.time-badge.checkin {
+  background: #d4edda;
+  color: #155724;
+}
+
+.time-badge.checkout {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-badge.working {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+@media (max-width: 992px) {
+  .attendance-list-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .date-filter {
+    width: 100%;
+  }
+
+  .date-filter .form-control {
+    flex: 1;
+  }
+
+  .attendance-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .attendance-table {
+    font-size: 14px;
+  }
+
+  .attendance-table th,
+  .attendance-table td {
+    padding: 10px 8px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+}

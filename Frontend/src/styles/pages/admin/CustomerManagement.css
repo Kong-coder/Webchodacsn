@@ -1,0 +1,172 @@
+/* Global Styles */
+.customer-management-container {
+  background: #f8f9fa;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Customer List Styles */
+.customer-list-scroll {
+  max-height: 700px;
+  overflow-y: auto;
+}
+
+.customer-card {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.customer-card:hover {
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.customer-card.selected {
+  border-color: #0d6efd !important;
+}
+
+.customer-avatar {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
+/* VIP Badge */
+.vip-badge {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  font-size: 0.65rem;
+}
+
+/* Gradient Elements */
+.gradient-bg {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+}
+
+.gradient-button {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  border: none;
+  color: white;
+}
+
+.gradient-button:hover {
+  opacity: 0.9;
+  color: white;
+}
+
+/* Customer Detail Header */
+.detail-header-avatar {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+/* Timeline Styles */
+.timeline-icon {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  flex-shrink: 0;
+}
+
+.timeline-promo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+}
+
+/* Modal Styles */
+.modal-backdrop-custom {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-header-gradient {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 3rem;
+}
+
+/* Search Input */
+.search-input-group .input-group-text {
+  background: white;
+  border-right: 0;
+}
+
+.search-input-group .form-control {
+  border-left: 0;
+}
+
+.search-input-group .form-control:focus {
+  border-color: #dee2e6;
+  box-shadow: none;
+}
+
+/* Utility Classes */
+.text-white-50 {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Scrollbar Styling (Optional) */
+.customer-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customer-list-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.customer-list-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.customer-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+/* I
+nfo Cards */
+.info-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s;
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Detail Items */
+.detail-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 0.375rem;
+  border-left: 3px solid #0d6efd;
+}
+
+.detail-item label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.detail-item p {
+  color: #212529;
+}
+
+/* Alert Customization */
+.alert-light {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.alert-info {
+  background-color: #e7f3ff;
+  border-color: #b3d9ff;
+  color: #004085;
+}

@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  profiles:
+    active: docker-localdb
+  datasource:
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?prepareThreshold=0
+    username: postgres.ohfpikzrzxouynjtjcea
+    password: cong188205..
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 600000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+app:
+  jwtSecret: "======================BezKoder=Spring==========================."
+  jwtExpirationMs: 86400000
+  google:
+    clientId: 678854453765-nkv2asgelbskh72tdo680llsvmiqvgg9.apps.googleusercontent.com
+  facebook:
+    app-id: 1323920259428912
+    app-secret: 16e7c6f4321f990ffec5c873c745ac90
+    redirect-callback: http://localhost:3001/api/auth/facebook/callback
+  frontend:
+    redirect-after-login: http://localhost:3001

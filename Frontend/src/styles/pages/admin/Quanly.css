@@ -1,0 +1,332 @@
+/* Main Container */
+.spa-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+/* Header */
+.spa-header {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  padding: 30px 0;
+  color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.spa-header h1 {
+  font-weight: 700;
+  font-size: 2.5rem;
+}
+
+.spa-header p {
+  opacity: 0.9;
+}
+
+/* Navigation Pills */
+.spa-nav-pills {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.spa-nav-pills .nav-link {
+  border-radius: 8px;
+}
+
+/* Cards */
+.spa-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.spa-card-body {
+  border-radius: 8px;
+}
+
+/* Service Card */
+.service-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+}
+
+.service-card-img {
+  height: 200px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.service-card .card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.service-discount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.service-status-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+}
+
+.service-card-title {
+  font-weight: 700;
+  color: #333;
+  min-height: 2.4em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.service-card-category {
+  font-size: 11px;
+}
+
+.service-card-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+  min-height: 3.6em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.service-price-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.service-price-value {
+  font-weight: 700;
+  font-size: 18px;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.service-button {
+  flex: 1;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Combo Card */
+.combo-card {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+}
+
+.combo-card-title {
+  font-weight: 700;
+  color: #333;
+}
+
+.combo-card-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.combo-service-list {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.combo-original-price {
+  font-size: 12px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.combo-final-price {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.combo-button {
+  border-radius: 8px;
+}
+
+/* Stats Cards */
+.stats-card-revenue {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.stats-card-services {
+  background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+}
+
+.stats-card-bookings {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+}
+
+.stats-card-label {
+  opacity: 0.9;
+}
+
+.stats-card-value {
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.stats-table-header {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  color: white;
+}
+
+.stats-table-rank {
+  font-weight: 700;
+}
+
+.stats-table-name {
+  font-weight: 600;
+}
+
+.stats-table-revenue {
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* Buttons */
+.btn-gradient {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-gradient-full {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  width: 100%;
+}
+
+/* Form Controls */
+.spa-form-control {
+  border-radius: 8px;
+}
+
+.spa-form-select {
+  border-radius: 8px;
+}
+
+.spa-form-label {
+  font-weight: 600;
+}
+
+/* Modal */
+.spa-modal-header {
+  background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+  color: white;
+}
+
+.spa-modal-title {
+  font-weight: 700;
+}
+
+.spa-modal-button {
+  border-radius: 8px;
+}
+
+/* Combo Modal Service Selection */
+.combo-service-selector {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.combo-service-item {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  transition: all 0.2s;
+}
+
+.combo-service-item.selected {
+  border: 2px solid #667eea;
+  background: #f0f2ff;
+}
+
+.combo-service-name {
+  font-weight: 600;
+}
+
+.combo-service-info {
+  color: #666;
+}
+
+.combo-service-price {
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* Combo Overview Card */
+.combo-overview-card {
+  background: #f8f9fa;
+  border: none;
+  border-radius: 8px;
+}
+
+.combo-overview-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.combo-overview-row {
+  font-weight: 600;
+}
+
+/* Top Services Table Title */
+.top-services-title {
+  font-weight: 700;
+  margin-bottom: 20px;
+}

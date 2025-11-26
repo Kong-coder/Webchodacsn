@@ -1,0 +1,78 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?prepareThreshold=0
+    username: postgres.ohfpikzrzxouynjtjcea
+    password: cong188205..
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 600000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+          batch_size: 10
+        order_inserts: true
+        order_updates: true
+        connection:
+          provider_disables_autocommit: false
+      # Kích hoạt hiển thị SQL
+      hibernate.show_sql: true
+      hibernate.format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 678854453765-nkv2asgelbskh72tdo680llsvmiqvgg9.apps.googleusercontent.com
+            authorization-grant-type: authorization_code
+            scope:
+              - email
+              - profile
+            redirect-uri: http://localhost:8080/api/auth/oauth2/code/google
+            client-authentication-method: none # Sử dụng PKCE
+          facebook:
+            client-id: 1323920259428912
+            client-secret: 16e7c6f4321f990ffec5c873c745ac90
+            redirect-uri: http://localhost:8080/api/auth/oauth2/code/facebook
+            scope:
+              - email
+              - public_profile
+
+app:
+  jwtSecret: "======================BezKoder=Spring==========================."
+  jwtExpirationMs: 86400000
+  frontend:
+    url: http://localhost:3001
+
+momo:
+  env: sandbox
+  partnerCode: MOMO
+  accessKey: F8BBA842ECF85
+  secretKey: K951B6PE1waDMi640xX08PD3vg6EkVlz
+  endpointCreate: https://test-payment.momo.vn/v2/gateway/api/create
+  redirectUrl: http://localhost:3001/client/payment-result
+  ipnUrl: http://localhost:8080/api/thanh-toan/momo/webhook
+  requestType: captureWallet
+  lang: vi
+
+payment:
+  momo:
+    partner-code: MOMO
+    access-key: F8BBA842ECF85
+    secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
+    return-url: http://localhost:3001/client/payment-result
+    ipn-url: http://localhost:8080/api/thanh-toan/momo/webhook

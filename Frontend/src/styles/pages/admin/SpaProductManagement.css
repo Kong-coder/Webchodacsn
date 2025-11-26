@@ -1,0 +1,171 @@
+/* Main Container */
+.spa-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Notification Toast */
+.spa-notification {
+  z-index: 9999;
+}
+
+/* Dashboard Cards - Gradient Backgrounds */
+.card-gradient-purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-gradient-pink {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.card-gradient-blue {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.card-gradient-orange {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+/* Card Icon Circle */
+.card-icon-circle {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Product Image */
+.product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
+/* Modal Backdrop */
+.modal-backdrop-custom {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Empty State Icon */
+.empty-state-icon {
+  opacity: 0.5;
+}
+
+/* Small Text Sizes */
+.text-micro {
+  font-size: 0.7rem;
+}
+
+/* Table Hover Effect */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Modal Transitions */
+.modal.show {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Button Group Styling */
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Alert Styling */
+.alert {
+  border-radius: 0.5rem;
+}
+
+/* Badge Styling */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+/* Card Hover Effects */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Form Control Focus */
+.form-control:focus,
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Input Group */
+.input-group-text {
+  background-color: #ffffff;
+}
+
+/* Toast Animation */
+.toast.show {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Scrollbar Styling */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* List Group Active State */
+.list-group-item.active {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .spa-container {
+    padding: 1rem !important;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  .btn-group-sm {
+    flex-direction: column;
+  }
+  
+  .btn-group-sm .btn {
+    margin-bottom: 0.25rem;
+  }
+}

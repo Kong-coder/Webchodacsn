@@ -1,0 +1,55 @@
+/* SpaRevenueDashboard.css */
+
+/* Container chính */
+.dashboard-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Card chung */
+.card-custom {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 0;
+}
+
+/* KPI icons */
+.kpi-icon {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.bg-primary-opacity {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.bg-success-opacity {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.bg-warning-opacity {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bg-info-opacity {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Badges Top VIP */
+.badge-rank-1 {
+  background-color: #ffc107 !important;
+}
+
+.badge-rank-2 {
+  background-color: #6c757d !important;
+}
+
+.badge-rank-3 {
+  background-color: #0dcaf0 !important;
+}
+
+.badge-rank-other {
+  background-color: #f8f9fa !important;
+  color: #212529;
+}
