@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { showToast } from "../../components/Toast";
+import { showConfirm } from "../../components/ConfirmModal";
 
 function Home() {
+  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [stats, setStats] = useState({ happyClients: '0', averageRating: '0', proServices: '0' });
   const [testimonial, setTestimonial] = useState(null);
+
+  const handleBookingClick = async (e, serviceId = null) => {
+    e.preventDefault();
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    if (!token) {
+      // Chưa đăng nhập, hiển thị thông báo và hỏi có muốn đăng nhập không
+      const confirmLogin = await showConfirm('Bạn cần đăng nhập để đặt lịch. Bạn có muốn chuyển đến trang đăng nhập không?', 'Yêu cầu đăng nhập');
+      if (confirmLogin) {
+        navigate('/LoginPage', { state: { from: serviceId ? `/BookingPage?serviceId=${serviceId}` : '/BookingPage' } });
+      }
+      // Nếu không, không làm gì cả (ở lại trang hiện tại)
+    } else {
+      // Đã đăng nhập, chuyển sang trang đặt lịch
+      navigate(serviceId ? `/BookingPage?serviceId=${serviceId}` : '/BookingPage');
+    }
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -521,12 +541,10 @@ function Home() {
                 </p>
                 <div>
                   {/* Lien ket voi trang dat lich(BookingPage) */}
-                  {/* <button className="btn-hero-primary">Đặt lịch ngay</button> */}
-                  <Link to="/BookingPage" className="btn-hero-primary">
+                  <a href="#" onClick={(e) => handleBookingClick(e)} className="btn-hero-primary">
                     Đặt lịch ngay
-                  </Link>
+                  </a>
 
-                  {/* <button className="btn-hero-outline">Xem dịch vụ</button> */}
                   {/* Lien ket voi trang dich vu(Services) */}
                   <Link to="/Service" className="btn-hero-outline">
                     Xem dịch vụ
@@ -582,7 +600,7 @@ function Home() {
                       <div className="service-rating">★★★★★</div>
                     </div>
 
-                    <Link to={`/BookingPage?serviceId=${service.id}`} className="btn-book">Đặt lịch ngay</Link>
+                    <a href="#" onClick={(e) => handleBookingClick(e, service.id)} className="btn-book">Đặt lịch ngay</a>
                   </div>
                 </div>
               </div>
@@ -590,7 +608,7 @@ function Home() {
           </div>
 
           <div className="text-center">
-            <button className="view-all-btn">Xem tất cả dịch vụ</button>
+            <Link to="/Service" className="view-all-btn">Xem tất cả dịch vụ</Link>
           </div>
         </div>
       </section>

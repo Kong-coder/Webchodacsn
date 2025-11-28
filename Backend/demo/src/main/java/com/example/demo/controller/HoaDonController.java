@@ -26,4 +26,10 @@ public class HoaDonController {
     public ResponseEntity<HoaDonResponse> create(@PathVariable Long orderId) {
         return ResponseEntity.ok(hoaDonService.createByOrderId(orderId));
     }
+
+    @PreAuthorize("hasAnyRole('NHANVIEN', 'QUANLY')")
+    @PatchMapping("/xac-nhan-thanh-toan")
+    public ResponseEntity<HoaDonResponse> confirmPayment(@PathVariable Long orderId) {
+        return ResponseEntity.ok(hoaDonService.confirmPayment(orderId));
+    }
 }

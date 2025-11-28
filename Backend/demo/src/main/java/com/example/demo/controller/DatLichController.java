@@ -85,33 +85,20 @@ public class DatLichController {
                     // Load customer name from khach_hang table
                     if (apt.getMaKhachHang() != null) {
                         try {
-                            String tenKhachHang = jdbcTemplate.queryForObject(
-                                "SELECT ho_ten FROM khach_hang WHERE id = ?",
-                                String.class,
+                            Map<String, Object> khachHang = jdbcTemplate.queryForMap(
+                                "SELECT kh.ho_ten, kh.so_dien_thoai, kh.email, nd.vip " +
+                                "FROM khach_hang kh " +
+                                "LEFT JOIN nguoi_dung nd ON kh.ma_nguoi_dung = nd.ma_nguoi_dung " +
+                                "WHERE kh.id = ?",
                                 apt.getMaKhachHang()
                             );
-                            map.put("tenKhachHang", tenKhachHang);
-                            
-                            // Also get phone and email
-                            try {
-                                String soDienThoai = jdbcTemplate.queryForObject(
-                                    "SELECT so_dien_thoai FROM khach_hang WHERE id = ?",
-                                    String.class,
-                                    apt.getMaKhachHang()
-                                );
-                                map.put("soDienThoai", soDienThoai);
-                            } catch (Exception ex) {}
-                            
-                            try {
-                                String email = jdbcTemplate.queryForObject(
-                                    "SELECT email FROM khach_hang WHERE id = ?",
-                                    String.class,
-                                    apt.getMaKhachHang()
-                                );
-                                map.put("email", email);
-                            } catch (Exception ex) {}
+                            map.put("tenKhachHang", khachHang.get("ho_ten"));
+                            map.put("soDienThoai", khachHang.get("so_dien_thoai"));
+                            map.put("email", khachHang.get("email"));
+                            map.put("khachHangVip", khachHang.get("vip") != null ? (Boolean) khachHang.get("vip") : false);
                         } catch (Exception e) {
                             map.put("tenKhachHang", "Khách hàng #" + apt.getMaKhachHang());
+                            map.put("khachHangVip", false);
                         }
                     }
                     
@@ -159,6 +146,22 @@ public class DatLichController {
                         }
                     }
                     
+                    // Load payment information from hoadon table
+                    try {
+                        Map<String, Object> hoaDon = jdbcTemplate.queryForMap(
+                            "SELECT order_id, phuong_thuc_thanh_toan, trang_thai FROM hoadon WHERE ma_lich_hen = ?",
+                            apt.getMaLichHen()
+                        );
+                        map.put("orderId", hoaDon.get("order_id"));
+                        map.put("phuongThucThanhToan", hoaDon.get("phuong_thuc_thanh_toan"));
+                        map.put("trangThaiHoaDon", hoaDon.get("trang_thai")); // unpaid, paid, void
+                    } catch (Exception e) {
+                        // No invoice found, set defaults
+                        map.put("orderId", null);
+                        map.put("phuongThucThanhToan", null);
+                        map.put("trangThaiHoaDon", "unpaid");
+                    }
+                    
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -171,6 +174,101 @@ public class DatLichController {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Lỗi khi lấy danh sách lịch hẹn: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Confirm appointment (for staff/admin)
+     */
+    @PatchMapping("/{id}/xac-nhan")
+    public ResponseEntity<?> confirmAppointment(@PathVariable Long id) {
+        System.out.println("=== CONFIRM APPOINTMENT API CALLED for ID: " + id + " ===");
+        try {
+            DatLichResponse response = datLichService.xacNhanLichHen(id);
+            System.out.println("Appointment confirmed successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error confirming appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi xác nhận lịch hẹn: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel/Reject appointment (for staff)
+     */
+    @PatchMapping("/{id}/tu-choi")
+    public ResponseEntity<?> rejectAppointment(
+            @PathVariable Long id, 
+            @RequestParam(required = false) String lyDo) {
+        System.out.println("=== REJECT APPOINTMENT API CALLED for ID: " + id + " ===");
+        System.out.println("Lý do từ chối: " + lyDo);
+        try {
+            String reason = lyDo != null && !lyDo.trim().isEmpty() ? lyDo : "Nhân viên từ chối";
+            datLichService.tuChoiLichHen(id, reason);
+            System.out.println("Appointment rejected successfully with reason: " + reason);
+            return ResponseEntity.ok(Map.of("message", "Đã từ chối lịch hẹn"));
+        } catch (Exception e) {
+            System.err.println("Error rejecting appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi từ chối lịch hẹn: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel appointment (for customer) - using /huy endpoint
+     */
+    @PostMapping("/{id}/huy")
+    public ResponseEntity<?> cancelAppointment(@PathVariable Long id, @RequestParam(required = false) String lyDo) {
+        System.out.println("=== CANCEL APPOINTMENT API CALLED for ID: " + id + " ===");
+        try {
+            String reason = lyDo != null ? lyDo : "Khách hàng hủy lịch";
+            datLichService.huyDatLich(id, reason);
+            System.out.println("Appointment cancelled successfully");
+            return ResponseEntity.ok(Map.of("message", "Đã hủy lịch hẹn"));
+        } catch (Exception e) {
+            System.err.println("Error cancelling appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi hủy lịch hẹn: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Update appointment (for customer)
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAppointment(@PathVariable Long id, @RequestBody DatLichRequest request) {
+        System.out.println("=== UPDATE APPOINTMENT API CALLED for ID: " + id + " ===");
+        try {
+            DatLichResponse response = datLichService.capNhatLichHen(id, request);
+            System.out.println("Appointment updated successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error updating appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi cập nhật lịch hẹn: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Complete appointment
+     */
+    @PatchMapping("/{id}/hoan-thanh")
+    public ResponseEntity<?> completeAppointment(@PathVariable Long id) {
+        System.out.println("=== COMPLETE APPOINTMENT API CALLED for ID: " + id + " ===");
+        try {
+            DatLichResponse response = datLichService.hoanThanhLichHen(id);
+            System.out.println("Appointment completed successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error completing appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi hoàn thành lịch hẹn: " + e.getMessage()));
         }
     }
 
@@ -282,6 +380,22 @@ public class DatLichController {
                         } catch (Exception e) {
                             map.put("tenCombo", "Combo #" + apt.getMaCombo());
                         }
+                    }
+                    
+                    // Load payment information from hoadon table
+                    try {
+                        Map<String, Object> hoaDon = jdbcTemplate.queryForMap(
+                            "SELECT order_id, phuong_thuc_thanh_toan, trang_thai FROM hoadon WHERE ma_lich_hen = ?",
+                            apt.getMaLichHen()
+                        );
+                        map.put("orderId", hoaDon.get("order_id"));
+                        map.put("phuongThucThanhToan", hoaDon.get("phuong_thuc_thanh_toan"));
+                        map.put("trangThaiHoaDon", hoaDon.get("trang_thai")); // unpaid, paid, void
+                    } catch (Exception e) {
+                        // No invoice found, set defaults
+                        map.put("orderId", null);
+                        map.put("phuongThucThanhToan", null);
+                        map.put("trangThaiHoaDon", "unpaid");
                     }
                     
                     return map;

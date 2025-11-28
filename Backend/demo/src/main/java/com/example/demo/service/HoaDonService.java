@@ -50,6 +50,21 @@ public class HoaDonService {
         return map(hd);
     }
 
+    @Transactional
+    public HoaDonResponse confirmPayment(Long orderId) {
+        HoaDon hd = hoaDonRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Hóa đơn không tồn tại cho đơn hàng"));
+        
+        // Only confirm payment for CASH payments
+        if (!"CASH".equalsIgnoreCase(hd.getPhuongThucThanhToan())) {
+            throw new IllegalArgumentException("Chỉ có thể xác nhận thanh toán tiền mặt");
+        }
+        
+        hd.setTrangThai("paid");
+        hd = hoaDonRepository.save(hd);
+        return map(hd);
+    }
+
     private HoaDonResponse map(HoaDon e) {
         HoaDonResponse d = new HoaDonResponse();
         d.setMaHoaDon(e.getMaHoaDon());

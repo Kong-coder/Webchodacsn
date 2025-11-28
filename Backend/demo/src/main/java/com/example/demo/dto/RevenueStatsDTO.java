@@ -16,8 +16,10 @@ public class RevenueStatsDTO {
     private Integer totalCustomers;
     private Integer totalTransactions;
     private Integer totalBookings; // Alias for totalTransactions
+    private Integer totalOrders; // Alias for totalTransactions (for frontend compatibility)
     private BigDecimal averageRevenuePerCustomer;
     private BigDecimal avgRevenuePerCustomer; // Alias for averageRevenuePerCustomer
+    private BigDecimal avgOrderValue; // Average revenue per order (for frontend compatibility)
     private Double growthRate;
     private Double revenueGrowthPercentage; // Alias for growthRate
     private List<Map<String, Object>> revenueByService;

@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import "bootstrap/dist/css/bootstrap.min.css";
+import { showToast } from './Toast';
+import { showConfirm } from './ConfirmModal';
 
 const AboutPage = () => {
+  const navigate = useNavigate();
   const [counters, setCounters] = useState({
     customers: 0,
     services: 0,
     experience: 0,
     satisfaction: 0
   });
+
+  const handleBookingClick = async () => {
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    if (!token) {
+      const confirmLogin = await showConfirm('Bạn cần đăng nhập để đặt lịch. Bạn có muốn chuyển đến trang đăng nhập không?', 'Yêu cầu đăng nhập');
+      if (confirmLogin) {
+        navigate('/LoginPage', { state: { from: '/BookingPage' } });
+      }
+    } else {
+      navigate('/BookingPage');
+    }
+  };
 
   useEffect(() => {
     const animateCounters = () => {
@@ -92,12 +109,14 @@ const AboutPage = () => {
                 <button 
                   className="btn btn-lg px-4 py-3 fw-semibold text-white border-0"
                   style={{ backgroundColor: '#e91e63', borderRadius: '12px' }}
+                  onClick={handleBookingClick}
                 >
                   Đặt lịch ngay
                 </button>
                 <button 
                   className="btn btn-outline-secondary btn-lg px-4 py-3"
                   style={{ borderRadius: '12px' }}
+                  onClick={() => navigate('/Service')}
                 >
                   Tìm hiểu thêm
                 </button>
@@ -565,12 +584,14 @@ const AboutPage = () => {
             <button 
               className="btn btn-light btn-lg px-5 py-3 fw-semibold"
               style={{ borderRadius: '12px' }}
+              onClick={handleBookingClick}
             >
               Đặt lịch hẹn ngay
             </button>
             <button 
               className="btn btn-outline-light btn-lg px-5 py-3"
               style={{ borderRadius: '12px' }}
+              onClick={() => navigate('/Service')}
             >
               Tư vấn miễn phí
             </button>

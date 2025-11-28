@@ -42,6 +42,8 @@ const CustomerManagement = () => {
     notes: ''
   });
   const [customers, setCustomers] = useState([]);
+  const [services, setServices] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     phone: "",
@@ -80,6 +82,39 @@ const CustomerManagement = () => {
     }
   }, [searchTerm, filterVIP]);
 
+  const fetchServicesAndEmployees = React.useCallback(async () => {
+    try {
+      const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const [servicesRes, employeesRes] = await Promise.all([
+        fetch('/api/dich-vu', { headers }),
+        fetch('/api/employees?size=100', { headers })
+      ]);
+      
+      if (servicesRes.ok) {
+        const servicesData = await servicesRes.json();
+        console.log('Services data:', servicesData);
+        setServices(Array.isArray(servicesData) ? servicesData : (servicesData.content || []));
+      } else {
+        console.error('Failed to fetch services:', servicesRes.status);
+      }
+      
+      if (employeesRes.ok) {
+        const employeesData = await employeesRes.json();
+        console.log('Employees data:', employeesData);
+        setEmployees(Array.isArray(employeesData) ? employeesData : (employeesData.content || []));
+      } else {
+        console.error('Failed to fetch employees:', employeesRes.status);
+      }
+    } catch (error) {
+      console.error("Failed to fetch services/employees:", error);
+    }
+  }, []);
+
   useEffect(() => {
     const debounceFetch = setTimeout(() => {
         fetchCustomers();
@@ -87,6 +122,10 @@ const CustomerManagement = () => {
 
     return () => clearTimeout(debounceFetch);
   }, [fetchCustomers]);
+
+  useEffect(() => {
+    fetchServicesAndEmployees();
+  }, [fetchServicesAndEmployees]);
 
 
   const handleAddCustomer = async () => {
@@ -233,22 +272,16 @@ const CustomerManagement = () => {
         return;
       }
       
-      const response = await fetch(`/api/customers/${selectedCustomer.id}`, {
+      const response = await fetch(`/api/customers/${selectedCustomer.id}/preferences`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: selectedCustomer.name,
-          phone: selectedCustomer.phone,
-          email: selectedCustomer.email,
-          address: selectedCustomer.address,
-          birthDate: selectedCustomer.birthday,
-          note: preferences.notes,
-          preferences: preferences.favoriteService,
+          favoriteService: preferences.favoriteService,
           preferredStaff: preferences.preferredStaff,
-          active: selectedCustomer.active
+          notes: preferences.notes
         }),
       });
 
@@ -257,8 +290,16 @@ const CustomerManagement = () => {
         throw new Error(errorData.error || 'Failed to update preferences');
       }
 
+      const updatedData = await response.json();
+      console.log('Updated customer data:', updatedData);
+      
       setShowPreferencesModal(false);
       showToast("Đã cập nhật thói quen & sở thích!", "success");
+      
+      // Update selected customer with new data
+      setSelectedCustomer(updatedData);
+      
+      // Refresh customer list
       fetchCustomers();
     } catch (error) {
       console.error("Failed to update preferences:", error);
@@ -549,7 +590,7 @@ const CustomerManagement = () => {
                           <small className="text-muted">Ngày tham gia</small>
                         </div>
                         <h6 className="mb-0 fw-bold text-warning">
-                          {selectedCustomer.joinDate ? new Date(selectedCustomer.joinDate).toLocaleDateString('vi-VN') : 'N/A'}
+                          {selectedCustomer.createdDate ? new Date(selectedCustomer.createdDate).toLocaleDateString('vi-VN') : 'N/A'}
                         </h6>
                       </div>
                     </div>
@@ -608,10 +649,11 @@ const CustomerManagement = () => {
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => {
                           setPreferences({
-                            favoriteService: selectedCustomer.preferences || '',
-                            preferredStaff: selectedCustomer.preferredStaff || '',
+                            favoriteService: selectedCustomer.favoriteService || '',
+                            preferredStaff: selectedCustomer.favoriteStaff || '',
                             notes: selectedCustomer.notes || ''
                           });
+                          fetchServicesAndEmployees();
                           setShowPreferencesModal(true);
                         }}
                       >
@@ -622,13 +664,13 @@ const CustomerManagement = () => {
                     <div className="alert alert-light mb-3">
                       <small className="text-muted">Dịch vụ yêu thích</small>
                       <p className="mb-0 fw-medium">
-                        {selectedCustomer.preferences || 'Massage body'}
+                        {selectedCustomer.favoriteService || 'Chưa cập nhật'}
                       </p>
                     </div>
                     <div className="alert alert-light mb-0">
                       <small className="text-muted">Nhân viên ưa chuộng</small>
                       <p className="mb-0 fw-medium">
-                        {selectedCustomer.preferredStaff || 'Thu Hà'}
+                        {selectedCustomer.favoriteStaff || 'Chưa cập nhật'}
                       </p>
                     </div>
                   </div>
@@ -795,7 +837,7 @@ const CustomerManagement = () => {
                 <div className="modal-header text-white modal-header-gradient">
                   <h5 className="modal-title">
                     <Tag size={20} className="me-2" />
-                    Cập nhật ghi chú khách hàng
+                    Cập nhật thói quen & sở thích
                   </h5>
                   <button
                     className="btn-close btn-close-white"
@@ -805,34 +847,52 @@ const CustomerManagement = () => {
                 <div className="modal-body">
                   <div className="mb-3">
                     <label className="form-label">Dịch vụ yêu thích</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Massage body"
+                    <select
+                      className="form-select"
                       value={preferences.favoriteService}
                       onChange={(e) =>
                         setPreferences({ ...preferences, favoriteService: e.target.value })
                       }
-                    />
+                    >
+                      <option value="">-- Chọn dịch vụ --</option>
+                      {services.length === 0 && <option disabled>Đang tải dịch vụ...</option>}
+                      {services.map((service) => (
+                        <option key={service.id} value={service.ten}>
+                          {service.ten}
+                        </option>
+                      ))}
+                    </select>
+                    {services.length === 0 && (
+                      <small className="text-muted">Số dịch vụ: {services.length}</small>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Nhân viên ưa chuộng</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Thu Hà"
+                    <select
+                      className="form-select"
                       value={preferences.preferredStaff}
                       onChange={(e) =>
                         setPreferences({ ...preferences, preferredStaff: e.target.value })
                       }
-                    />
+                    >
+                      <option value="">-- Chọn nhân viên --</option>
+                      {employees.length === 0 && <option disabled>Đang tải nhân viên...</option>}
+                      {employees.map((employee) => (
+                        <option key={employee.id} value={employee.name}>
+                          {employee.name}
+                        </option>
+                      ))}
+                    </select>
+                    {employees.length === 0 && (
+                      <small className="text-muted">Số nhân viên: {employees.length}</small>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Ghi chú thói quen</label>
                     <textarea
                       className="form-control"
                       rows="4"
-                      placeholder="Thích phòng yên tĩnh, da nhạy cảm"
+                      placeholder="Thích phòng yên tĩnh, da nhạy cảm..."
                       value={preferences.notes}
                       onChange={(e) =>
                         setPreferences({ ...preferences, notes: e.target.value })

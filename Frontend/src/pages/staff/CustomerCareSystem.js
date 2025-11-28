@@ -44,16 +44,27 @@ const CustomerCareSystem = () => {
     setError(null);
     try {
       const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-      const response = await fetch(`${API_BASE_URL}/customers?searchTerm=${searchTerm}&status=${filterStatus}`, {
+      const params = new URLSearchParams({
+        search: searchTerm,
+        page: 0,
+        size: 100,
+      });
+      if (filterStatus !== 'all') {
+        params.append('active', filterStatus === 'active');
+      }
+      
+      const response = await fetch(`/api/customers?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setCustomers(data);
+      // API trả về Page object với content array
+      setCustomers(data.content || data);
     } catch (error) {
       console.error("Error fetching customers:", error);
       setError("Failed to fetch customers.");
@@ -277,21 +288,21 @@ const CustomerCareSystem = () => {
   };
 
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.soDienThoai.includes(searchTerm);
+    const name = customer.name || customer.hoTen || '';
+    const phone = customer.phone || customer.soDienThoai || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         phone.includes(searchTerm);
     // The backend now handles status filtering, so this client-side filter might be redundant
     // but keeping it for consistency if the backend filter is not always applied.
-    const matchesFilter = filterStatus === 'all' || customer.status === filterStatus;
+    const matchesFilter = filterStatus === 'all' || customer.status === filterStatus || customer.vip === (filterStatus === 'VIP');
     return matchesSearch && matchesFilter;
   });
 
   const stats = {
     total: customers.length,
-    vip: customers.filter(c => c.status === 'VIP').length,
-    regular: customers.filter(c => c.status === 'Regular').length,
-    new: customers.filter(c => c.status === 'New').length,
-    totalRevenue: customers.reduce((sum, c) => sum + (c.tongChiTieu || 0), 0),
-    totalVisits: customers.reduce((sum, c) => sum + (c.soLanDen || 0), 0)
+    vip: customers.filter(c => c.vip === true).length,
+    totalRevenue: customers.reduce((sum, c) => sum + (c.totalSpent || c.tongChiTieu || 0), 0),
+    totalVisits: customers.reduce((sum, c) => sum + (c.visits || c.soLanDen || 0), 0)
   };
 
   return (
@@ -369,7 +380,7 @@ const CustomerCareSystem = () => {
             {/* Tabs */}
             <div className="p-4 border-bottom">
               <div className="row g-3">
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <button 
                     className={`btn w-100 py-3 ${activeTab === 'customers' ? 'btn-primary' : 'btn-light'}`}
                     onClick={() => setActiveTab('customers')}
@@ -379,7 +390,7 @@ const CustomerCareSystem = () => {
                     Danh sách khách hàng
                   </button>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <button 
                     className={`btn w-100 py-3 ${activeTab === 'messages' ? 'btn-primary' : 'btn-light'}`}
                     onClick={() => setActiveTab('messages')}
@@ -387,16 +398,6 @@ const CustomerCareSystem = () => {
                   >
                     <MessageSquare size={20} className="me-2" />
                     Tin nhắn hàng loạt
-                  </button>
-                </div>
-                <div className="col-md-4">
-                  <button 
-                    className={`btn w-100 py-3 ${activeTab === 'promotions' ? 'btn-primary' : 'btn-light'}`}
-                    onClick={() => setActiveTab('promotions')}
-                    style={{borderRadius: '15px', fontWeight: '600'}}
-                  >
-                    <Gift size={20} className="me-2" />
-                    Khuyến mãi
                   </button>
                 </div>
               </div>
@@ -458,15 +459,37 @@ const CustomerCareSystem = () => {
                           {/* Header */}
                           <div className="d-flex justify-content-between align-items-start mb-3">
                             <div className="d-flex align-items-center">
-                              <div className="me-3" style={{fontSize: '2.5rem'}}>{customer.avatar}</div>
+                              <div className="me-3">
+                                {customer.avatar ? (
+                                  <img 
+                                    src={customer.avatar} 
+                                    alt={customer.name || customer.hoTen} 
+                                    style={{
+                                      width: '50px', 
+                                      height: '50px', 
+                                      borderRadius: '50%', 
+                                      objectFit: 'cover'
+                                    }}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.nextSibling.style.display = 'block';
+                                    }}
+                                  />
+                                ) : null}
+                                <div style={{
+                                  fontSize: '2.5rem',
+                                  display: customer.avatar ? 'none' : 'block'
+                                }}>
+                                  👤
+                                </div>
+                              </div>
                               <div>
-                                <h6 className="fw-bold mb-1">{customer.hoTen}</h6>
+                                <h6 className="fw-bold mb-1">{customer.name || customer.hoTen || 'N/A'}</h6>
                                 <span className={`badge ${
-                                  customer.status === 'VIP' ? 'bg-warning text-dark' :
-                                  customer.status === 'Regular' ? 'bg-primary' : 'bg-success'
+                                  customer.vip ? 'bg-warning text-dark' : 'bg-primary'
                                 }`} style={{borderRadius: '10px', padding: '5px 10px'}}>
-                                  {customer.status === 'VIP' && <Star size={12} className="me-1" />}
-                                  {customer.status}
+                                  {customer.vip && <Star size={12} className="me-1" />}
+                                  {customer.vip ? 'VIP' : 'Thường'}
                                 </span>
                               </div>
                             </div>
@@ -476,11 +499,11 @@ const CustomerCareSystem = () => {
                           <div className="mb-3">
                             <div className="d-flex align-items-center mb-2 text-muted small">
                               <Phone size={14} className="me-2" />
-                              {customer.soDienThoai}
+                              {customer.phone || customer.soDienThoai || 'N/A'}
                             </div>
                             <div className="d-flex align-items-center text-muted small">
                               <Mail size={14} className="me-2" />
-                              {customer.email}
+                              {customer.email || 'N/A'}
                             </div>
                           </div>
 
@@ -488,19 +511,21 @@ const CustomerCareSystem = () => {
                           <div className="row g-2 mb-3">
                             <div className="col-4">
                               <div className="text-center p-2 bg-light" style={{borderRadius: '10px'}}>
-                                <div className="fw-bold text-primary">{customer.soLanDen}</div>
+                                <div className="fw-bold text-primary">{customer.visits || customer.soLanDen || 0}</div>
                                 <small className="text-muted">Lượt đến</small>
                               </div>
                             </div>
                             <div className="col-4">
                               <div className="text-center p-2 bg-light" style={{borderRadius: '10px'}}>
-                                <div className="fw-bold text-success">{(customer.tongChiTieu / 1000).toFixed(0)}K</div>
+                                <div className="fw-bold text-success">
+                                  {((customer.totalSpent || customer.tongChiTieu || 0) / 1000).toFixed(0)}K
+                                </div>
                                 <small className="text-muted">Chi tiêu</small>
                               </div>
                             </div>
                             <div className="col-4">
                               <div className="text-center p-2 bg-light" style={{borderRadius: '10px'}}>
-                                <div className="fw-bold text-warning">{customer.diemTichLuy}</div>
+                                <div className="fw-bold text-warning">{customer.points || customer.diemTichLuy || 0}</div>
                                 <small className="text-muted">Điểm</small>
                               </div>
                             </div>
@@ -877,31 +902,72 @@ const CustomerCareSystem = () => {
                 <div className="card border-0 shadow-sm mb-4" style={{borderRadius: '15px', background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)'}}>
                   <div className="card-body p-3">
                     <div className="d-flex align-items-center">
-                      <div style={{fontSize: '2.5rem'}} className="me-3">{selectedCustomer.avatar}</div>
+                      <div className="me-3">
+                        {selectedCustomer.avatar && selectedCustomer.avatar.startsWith('http') ? (
+                          <img 
+                            src={selectedCustomer.avatar} 
+                            alt={selectedCustomer.hoTen || selectedCustomer.name} 
+                            style={{
+                              width: '60px', 
+                              height: '60px', 
+                              borderRadius: '50%', 
+                              objectFit: 'cover',
+                              border: '3px solid white',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div style={{
+                          fontSize: '2.5rem',
+                          display: (selectedCustomer.avatar && selectedCustomer.avatar.startsWith('http')) ? 'none' : 'flex',
+                          width: '60px',
+                          height: '60px',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'white',
+                          borderRadius: '50%',
+                          border: '3px solid white',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}>
+                          👤
+                        </div>
+                      </div>
                       <div className="flex-grow-1">
                         <div className="row g-2">
                           <div className="col-md-6">
                             <small className="text-muted">Tên khách hàng</small>
-                            <div className="fw-bold">{selectedCustomer.hoTen}</div>
+                            <div className="fw-bold">{selectedCustomer.hoTen || selectedCustomer.name}</div>
                           </div>
                           <div className="col-md-6">
                             <small className="text-muted">Số điện thoại</small>
-                            <div className="fw-bold">{selectedCustomer.soDienThoai}</div>
+                            <div className="fw-bold">{selectedCustomer.soDienThoai || selectedCustomer.phone}</div>
                           </div>
                           <div className="col-md-6">
                             <small className="text-muted">Email</small>
-                            <div className="fw-bold">{selectedCustomer.email}</div>
+                            <div className="fw-bold">{selectedCustomer.email || 'N/A'}</div>
                           </div>
                           <div className="col-md-6">
                             <small className="text-muted">Trạng thái</small>
                             <div>
                               <span className={`badge ${
-                                selectedCustomer.status === 'VIP' ? 'bg-warning text-dark' :
+                                selectedCustomer.vip || selectedCustomer.status === 'VIP' ? 'bg-warning text-dark' :
                                 selectedCustomer.status === 'Regular' ? 'bg-primary' : 'bg-success'
                               }`} style={{borderRadius: '8px'}}>
-                                {selectedCustomer.status}
+                                {selectedCustomer.vip || selectedCustomer.status === 'VIP' ? 'VIP' : selectedCustomer.status || 'Regular'}
                               </span>
                             </div>
+                          </div>
+                          <div className="col-md-6">
+                            <small className="text-muted">Lượt đến</small>
+                            <div className="fw-bold text-primary">{selectedCustomer.visits || 0} lần</div>
+                          </div>
+                          <div className="col-md-6">
+                            <small className="text-muted">Chi tiêu</small>
+                            <div className="fw-bold text-success">{(selectedCustomer.totalSpent || 0).toLocaleString('vi-VN')}đ</div>
                           </div>
                         </div>
                       </div>

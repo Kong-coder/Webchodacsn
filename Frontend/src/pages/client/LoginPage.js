@@ -161,7 +161,9 @@ const LoginPage = () => {
 
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ general: 'Email hoặc mật khẩu không chính xác.' });
+      const errorMessage = 'Email hoặc mật khẩu không chính xác.';
+      setErrors({ general: errorMessage });
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

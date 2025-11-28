@@ -10,6 +10,7 @@ const AppointmentManager = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [editFormData, setEditFormData] = useState({ service: '', date: '', time: '', note: '' });
 
   useEffect(() => {
@@ -69,9 +70,21 @@ const AppointmentManager = () => {
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === 'all') return true;
     const status = appointment.trangThai || appointment.status;
+    const paymentStatus = appointment.trangThaiHoaDon;
+    const paymentMethod = appointment.phuongThucThanhToan;
+    
     // Map backend status to frontend tabs
     if (activeTab === 'booked') return status === 'CHO_XAC_NHAN' || status === 'DA_XAC_NHAN' || status === 'DANG_THUC_HIEN';
-    if (activeTab === 'completed') return status === 'HOAN_THANH';
+    
+    // Tab "Hoàn thành" chỉ hiển thị lịch đã xác nhận VÀ đã thanh toán
+    // - Với MoMo: tự động paid khi thanh toán thành công
+    // - Với CASH: nhân viên xác nhận thanh toán
+    if (activeTab === 'completed') {
+      const isConfirmed = status === 'DA_XAC_NHAN' || status === 'DANG_THUC_HIEN' || status === 'HOAN_THANH';
+      const isPaid = paymentStatus === 'paid';
+      return isConfirmed && isPaid;
+    }
+    
     if (activeTab === 'cancelled') return status === 'DA_HUY';
     return status === activeTab;
   });
@@ -111,13 +124,20 @@ const AppointmentManager = () => {
 
   const confirmCancelAppointment = async () => {
     if (!selectedAppointment) return;
+    
+    if (!cancelReason.trim()) {
+      alert('Vui lòng nhập lý do hủy!');
+      return;
+    }
 
     try {
+      const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
       const appointmentId = selectedAppointment.id || selectedAppointment.maLichHen;
-      const response = await fetch(`/api/dat-lich/${appointmentId}/huy?lyDo=Khách hàng hủy lịch`, {
+      const response = await fetch(`/api/dat-lich/${appointmentId}/huy?lyDo=${encodeURIComponent(cancelReason)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
       });
 
@@ -130,6 +150,7 @@ const AppointmentManager = () => {
       fetchAppointments();
       setShowCancelModal(false);
       setSelectedAppointment(null);
+      setCancelReason('');
     } catch (err) {
       console.error('Error canceling appointment:', err);
       alert('Lỗi khi hủy lịch hẹn: ' + err.message);
@@ -167,11 +188,13 @@ const AppointmentManager = () => {
     };
 
     try {
+      const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
       const appointmentId = selectedAppointment.id || selectedAppointment.maLichHen;
       const response = await fetch(`/api/dat-lich/${appointmentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({ 
           thoiGianBatDau: formatWithTimezone(thoiGianBatDau),
@@ -197,14 +220,27 @@ const AppointmentManager = () => {
   const getTabCount = (status) => {
     if (!appointments || !Array.isArray(appointments)) return 0;
     if (status === 'all') return appointments.length;
-    const statusMap = {
-      'booked': ['CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DANG_THUC_HIEN'],
-      'completed': ['HOAN_THANH'],
-      'cancelled': ['DA_HUY']
-    };
+    
     return appointments.filter(app => {
       const appStatus = app.trangThai || app.status;
-      return statusMap[status]?.includes(appStatus) || appStatus === status;
+      const paymentStatus = app.trangThaiHoaDon;
+      
+      if (status === 'booked') {
+        return appStatus === 'CHO_XAC_NHAN' || appStatus === 'DA_XAC_NHAN' || appStatus === 'DANG_THUC_HIEN';
+      }
+      
+      // Tab "Hoàn thành" chỉ đếm lịch đã xác nhận VÀ đã thanh toán
+      if (status === 'completed') {
+        const isConfirmed = appStatus === 'DA_XAC_NHAN' || appStatus === 'DANG_THUC_HIEN' || appStatus === 'HOAN_THANH';
+        const isPaid = paymentStatus === 'paid';
+        return isConfirmed && isPaid;
+      }
+      
+      if (status === 'cancelled') {
+        return appStatus === 'DA_HUY';
+      }
+      
+      return appStatus === status;
     }).length;
   };
 
@@ -550,13 +586,40 @@ const AppointmentManager = () => {
                       <small className="d-block mb-1">Ngày: {selectedAppointment && selectedAppointment.thoiGianBatDau && formatDate(selectedAppointment.thoiGianBatDau)} | Giờ: {selectedAppointment?.thoiGianBatDau && new Date(selectedAppointment.thoiGianBatDau).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</small>
                       <small className="d-block">Nhân viên: {selectedAppointment?.tenNhanVien || 'Chưa phân công'} | Địa điểm: BeautySpa</small>
                     </div>
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Lý do hủy *</label>
+                      <textarea
+                        className="form-control form-control-sm"
+                        rows="3"
+                        placeholder="Vui lòng nhập lý do hủy lịch hẹn..."
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                      ></textarea>
+                      <small className="text-muted">Lý do này sẽ được gửi cho spa</small>
+                    </div>
                     <div className="alert alert-warning py-2 mb-0">
                       <small>Việc hủy lịch hẹn có thể áp dụng phí hủy theo chính sách</small>
                     </div>
                   </div>
                   <div className="modal-footer py-2">
-                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setShowCancelModal(false)}>Giữ lại</button>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={confirmCancelAppointment}>Xác nhận hủy</button>
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary btn-sm" 
+                      onClick={() => {
+                        setShowCancelModal(false);
+                        setCancelReason('');
+                      }}
+                    >
+                      Giữ lại
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-danger btn-sm" 
+                      onClick={confirmCancelAppointment}
+                      disabled={!cancelReason.trim()}
+                    >
+                      Xác nhận hủy
+                    </button>
                   </div>
                 </div>
               </div>

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Heart, Star, Clock, Filter, Search, Grid, List, ChevronDown, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getCategoryName, getCategoryIcon } from '../../utils/categoryMapper';
+import { showToast } from '../../components/Toast';
+import { showConfirm } from '../../components/ConfirmModal';
 
 const ModernServiceLayout = () => {
+  const navigate = useNavigate();
   const [allServices, setAllServices] = useState([]);
   const [allCombos, setAllCombos] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -13,6 +16,25 @@ const ModernServiceLayout = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('services'); // 'services' or 'combos'
   const servicesPerPage = 6;
+
+  const handleBookingClick = async (e, type, id) => {
+    e.preventDefault();
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    if (!token) {
+      // Chưa đăng nhập, hiển thị thông báo và hỏi có muốn đăng nhập không
+      const confirmLogin = await showConfirm('Bạn cần đăng nhập để đặt lịch. Bạn có muốn chuyển đến trang đăng nhập không?', 'Yêu cầu đăng nhập');
+      if (confirmLogin) {
+        const redirectPath = type === 'combo' ? `/BookingPage?comboId=${id}` : `/BookingPage?serviceId=${id}`;
+        navigate('/LoginPage', { state: { from: redirectPath } });
+      }
+      // Nếu không, không làm gì cả (ở lại trang hiện tại)
+    } else {
+      // Đã đăng nhập, chuyển sang trang đặt lịch
+      const path = type === 'combo' ? `/BookingPage?comboId=${id}` : `/BookingPage?serviceId=${id}`;
+      navigate(path);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -237,7 +259,7 @@ const ModernServiceLayout = () => {
                                 
                                 <div className="d-flex align-items-center justify-content-between pt-3 border-top">
                                     <span className="h4 fw-bold mb-0 text-success">{combo.price.toLocaleString('vi-VN')}đ</span>
-                                    <Link to={`/BookingPage?comboId=${combo.id}`} className="btn btn-success px-4 py-2 rounded-pill fw-medium">Đặt combo ngay</Link>
+                                    <a href="#" onClick={(e) => handleBookingClick(e, 'combo', combo.id)} className="btn btn-success px-4 py-2 rounded-pill fw-medium">Đặt combo ngay</a>
                                 </div>
                             </div>
                         </div>
@@ -271,7 +293,7 @@ const ModernServiceLayout = () => {
                                     <span className="h5 fw-bold mb-0 text-primary">{service.price.toLocaleString('vi-VN')}đ</span>
                                 </div>
                                 <div className="d-flex justify-content-end">
-                                    <Link to={`/BookingPage?serviceId=${service.id}`} className="btn btn-primary px-4 py-2 rounded-pill fw-medium w-100" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}>Đặt lịch ngay</Link>
+                                    <a href="#" onClick={(e) => handleBookingClick(e, 'service', service.id)} className="btn btn-primary px-4 py-2 rounded-pill fw-medium w-100" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}>Đặt lịch ngay</a>
                                 </div>
                             </div>
                             </div>

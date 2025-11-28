@@ -321,8 +321,241 @@ const SpaRevenueDashboard = () => {
     serviceStats.map(s => ({ name: s.serviceName, value: s.totalRevenue / 1000000 }))
   , [serviceStats]);
 
-  const handleExportExcel = () => alert('Exporting to Excel...');
-  const handleExportPDF = () => alert('Exporting to PDF...');
+  const handleExportExcel = () => {
+    // Tạo CSV content (Excel có thể mở file CSV)
+    const csvContent = [];
+    
+    // Header
+    csvContent.push('\uFEFF'); // BOM for UTF-8
+    csvContent.push('BÁO CÁO DOANH THU\n');
+    csvContent.push(`Từ ngày: ${startDate} - Đến ngày: ${endDate}\n\n`);
+    
+    // KPIs - với kiểm tra an toàn
+    csvContent.push('TỔNG QUAN\n');
+    csvContent.push('Chỉ tiêu,Giá trị\n');
+    csvContent.push(`Tổng doanh thu,${(kpis?.totalRevenue || 0).toLocaleString('vi-VN')}đ\n`);
+    csvContent.push(`Tổng đơn hàng,${kpis?.totalOrders || 0}\n`);
+    csvContent.push(`Tổng khách hàng,${kpis?.totalCustomers || 0}\n`);
+    csvContent.push(`Doanh thu trung bình/đơn,${(kpis?.avgOrderValue || 0).toLocaleString('vi-VN')}đ\n\n`);
+    
+    // Revenue by date
+    if (revenueByDate && revenueByDate.length > 0) {
+      csvContent.push('DOANH THU THEO NGÀY\n');
+      csvContent.push('Ngày,Doanh thu (VNĐ),Số đơn\n');
+      revenueByDate.forEach(item => {
+        csvContent.push(`${item.date || 'N/A'},${((item.revenue || 0) * 1000000).toLocaleString('vi-VN')},${item.totalOrders || 0}\n`);
+      });
+      csvContent.push('\n');
+    }
+    
+    // Service stats
+    if (serviceStats && serviceStats.length > 0) {
+      csvContent.push('DOANH THU THEO DỊCH VỤ\n');
+      csvContent.push('Dịch vụ,Số lượt đặt,Doanh thu (VNĐ)\n');
+      serviceStats.forEach(item => {
+        csvContent.push(`${item.serviceName || 'N/A'},${item.bookingCount || 0},${(item.totalRevenue || 0).toLocaleString('vi-VN')}\n`);
+      });
+      csvContent.push('\n');
+    }
+    
+    // Top customers
+    if (topCustomers && topCustomers.length > 0) {
+      csvContent.push('TOP KHÁCH HÀNG\n');
+      csvContent.push('Tên khách hàng,Số lượt đặt,Tổng chi tiêu (VNĐ)\n');
+      topCustomers.forEach(item => {
+        csvContent.push(`${item.customerName || 'N/A'},${item.bookingCount || 0},${(item.totalSpent || 0).toLocaleString('vi-VN')}\n`);
+      });
+    }
+    
+    // Download
+    const blob = new Blob([csvContent.join('')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `BaoCaoDoanhThu_${startDate}_${endDate}.csv`;
+    link.click();
+  };
+
+  const handleExportPDF = () => {
+    const printWindow = window.open('', '_blank');
+    const reportDate = new Date().toLocaleString('vi-VN');
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Báo cáo doanh thu</title>
+        <style>
+          @media print {
+            @page { margin: 2cm; }
+            body { margin: 0; }
+          }
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0088FE;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #0088FE;
+            margin: 0 0 10px 0;
+          }
+          .header p {
+            color: #666;
+            margin: 5px 0;
+          }
+          .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          .kpi-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+          }
+          .kpi-box h3 {
+            color: #666;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+          }
+          .kpi-box .value {
+            color: #0088FE;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .section {
+            margin-bottom: 30px;
+          }
+          .section h2 {
+            color: #0088FE;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #0088FE;
+            padding-bottom: 10px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          th {
+            background: #f8f9fa;
+            color: #0088FE;
+            font-weight: 600;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>BÁO CÁO DOANH THU</h1>
+          <p>Từ ngày: ${startDate} - Đến ngày: ${endDate}</p>
+          <p>Ngày xuất: ${reportDate}</p>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <h3>Tổng doanh thu</h3>
+            <div class="value">${((kpis?.totalRevenue || 0) / 1000000).toFixed(1)}M VNĐ</div>
+          </div>
+          <div class="kpi-box">
+            <h3>Tổng đơn hàng</h3>
+            <div class="value">${kpis?.totalOrders || 0}</div>
+          </div>
+          <div class="kpi-box">
+            <h3>Tổng khách hàng</h3>
+            <div class="value">${kpis?.totalCustomers || 0}</div>
+          </div>
+          <div class="kpi-box">
+            <h3>Trung bình/đơn</h3>
+            <div class="value">${((kpis?.avgOrderValue || 0) / 1000).toFixed(0)}K VNĐ</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Doanh thu theo dịch vụ</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Dịch vụ</th>
+                <th>Số lượt đặt</th>
+                <th>Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(serviceStats || []).map(item => `
+                <tr>
+                  <td>${item.serviceName || 'N/A'}</td>
+                  <td>${item.bookingCount || 0}</td>
+                  <td>${(item.totalRevenue || 0).toLocaleString('vi-VN')}đ</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>Top khách hàng</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Tên khách hàng</th>
+                <th>Số lượt đặt</th>
+                <th>Tổng chi tiêu</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(topCustomers || []).map(item => `
+                <tr>
+                  <td>${item.customerName || 'N/A'}</td>
+                  <td>${item.bookingCount || 0}</td>
+                  <td>${(item.totalSpent || 0).toLocaleString('vi-VN')}đ</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          <p>Báo cáo được tạo tự động bởi hệ thống BeautySpa</p>
+          <p>© 2024 BeautySpa - All rights reserved</p>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
 
   if (loading) {
       return <div className="d-flex justify-content-center align-items-center" style={{height: "100vh"}}><h2>Đang tải dữ liệu...</h2></div>
@@ -363,7 +596,7 @@ const SpaRevenueDashboard = () => {
         />
         <KPICard
           title="TB/Khách"
-          value={`${(kpis.avgRevenuePerCustomer / 1000).toFixed(0)}K`}
+          value={`${(kpis.avgRevenuePerCustomer / 1000000).toFixed(1)}M`}
           subtitle="Doanh thu trung bình"
           icon={TrendingUp}
           iconBgColor="bg-warning bg-opacity-10"

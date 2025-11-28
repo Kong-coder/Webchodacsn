@@ -117,7 +117,7 @@ const PaymentInvoice = () => {
     }
 
     const finalAmount = subtotal - discount;
-    const pointsEarned = Math.floor(finalAmount / 10000);
+    const pointsEarned = 50; // Mỗi đơn hàng được cộng 50 điểm
 
     return { subtotal, discount, finalAmount, pointsEarned, selectedServices, selectedProducts };
   };
@@ -310,6 +310,241 @@ Nhân viên: ${staff?.name || 'N/A'}
     showNotificationMsg('Đã xuất hóa đơn!');
   };
 
+  const handlePrintReport = () => {
+    const printWindow = window.open('', '_blank');
+    const reportDate = new Date().toLocaleString('vi-VN');
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Báo cáo thanh toán</title>
+        <style>
+          @media print {
+            @page { margin: 2cm; }
+            body { margin: 0; }
+          }
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #4a5f8f;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #4a5f8f;
+            margin: 0 0 10px 0;
+          }
+          .header p {
+            color: #666;
+            margin: 5px 0;
+          }
+          .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          .stat-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+          }
+          .stat-box h3 {
+            color: #666;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+          }
+          .stat-box .value {
+            color: #4a5f8f;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .stat-box .label {
+            color: #999;
+            font-size: 13px;
+          }
+          .summary {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+          }
+          .summary h2 {
+            color: #4a5f8f;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+          }
+          .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+            color: #4a5f8f;
+            padding-top: 15px;
+            margin-top: 10px;
+            border-top: 2px solid #4a5f8f;
+          }
+          .invoice-list {
+            margin-top: 30px;
+          }
+          .invoice-list h2 {
+            color: #4a5f8f;
+            margin-bottom: 15px;
+            font-size: 18px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          th {
+            background: #f8f9fa;
+            color: #4a5f8f;
+            font-weight: 600;
+          }
+          .status-paid {
+            color: #28a745;
+            font-weight: 600;
+          }
+          .status-unpaid {
+            color: #ffc107;
+            font-weight: 600;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>BÁO CÁO THANH TOÁN</h1>
+          <p>Ngày xuất: ${reportDate}</p>
+          <p>Hệ thống quản lý BeautySpa</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <h3>Tổng hóa đơn</h3>
+            <div class="value">${report.total}</div>
+            <div class="label">Tất cả hóa đơn</div>
+          </div>
+          <div class="stat-box">
+            <h3>Đã thanh toán</h3>
+            <div class="value" style="color: #28a745">${report.paid}</div>
+            <div class="label">Hoàn thành</div>
+          </div>
+          <div class="stat-box">
+            <h3>Chưa thanh toán</h3>
+            <div class="value" style="color: #ffc107">${report.unpaid}</div>
+            <div class="label">Đang chờ</div>
+          </div>
+          <div class="stat-box">
+            <h3>Doanh thu</h3>
+            <div class="value">${report.revenue.toLocaleString('vi-VN')}đ</div>
+            <div class="label">Đã thu</div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <h2>Tổng kết</h2>
+          <div class="summary-row">
+            <span>Thanh toán tiền mặt:</span>
+            <span>${report.paymentMethods.cash} hóa đơn</span>
+          </div>
+          <div class="summary-row">
+            <span>Thanh toán chuyển khoản:</span>
+            <span>${report.paymentMethods.card} hóa đơn</span>
+          </div>
+          <div class="summary-row">
+            <span>Tổng giảm giá:</span>
+            <span>${report.discount.toLocaleString('vi-VN')}đ</span>
+          </div>
+          <div class="summary-row">
+            <span>TỔNG DOANH THU:</span>
+            <span>${report.revenue.toLocaleString('vi-VN')}đ</span>
+          </div>
+        </div>
+
+        <div class="invoice-list">
+          <h2>Danh sách hóa đơn (${filteredInvoices.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Mã HĐ</th>
+                <th>Khách hàng</th>
+                <th>Ngày</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredInvoices.map(invoice => {
+                const invoiceId = invoice.id || invoice.maHoaDon;
+                const customerName = invoice.tenKhachHang || 'N/A';
+                const invoiceDate = invoice.ngayXuat || invoice.date;
+                const totalAmount = invoice.tongTien || invoice.finalAmount || 0;
+                const status = invoice.trangThai || invoice.paymentStatus;
+                const statusClass = isPaid(invoice) ? 'status-paid' : 'status-unpaid';
+                const statusText = isPaid(invoice) ? 'Đã thanh toán' : 'Chưa thanh toán';
+                
+                return `
+                  <tr>
+                    <td>${invoiceId}</td>
+                    <td>${customerName}</td>
+                    <td>${invoiceDate ? new Date(invoiceDate).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                    <td>${totalAmount.toLocaleString('vi-VN')}đ</td>
+                    <td class="${statusClass}">${statusText}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          <p>Báo cáo được tạo tự động bởi hệ thống BeautySpa</p>
+          <p>© 2024 BeautySpa - All rights reserved</p>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    showNotificationMsg('Đang chuẩn bị in báo cáo...');
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceId = String(invoice.id || invoice.maHoaDon || '');
     const customerName = invoice.tenKhachHang || '';
@@ -317,8 +552,16 @@ Nhân viên: ${staff?.name || 'N/A'}
                        customerName.toLowerCase().includes(searchTerm.toLowerCase());
     const status = invoice.trangThai || invoice.paymentStatus;
     const matchStatus = filterStatus === 'all' || status === filterStatus;
-    const paymentMethod = invoice.phuongThucThanhToan || invoice.paymentMethod;
-    const matchPayment = filterPayment === 'all' || paymentMethod === filterPayment;
+    
+    // Normalize payment method for filtering
+    const paymentMethod = (invoice.phuongThucThanhToan || invoice.paymentMethod || '').toUpperCase();
+    let matchPayment = filterPayment === 'all';
+    if (filterPayment === 'cash') {
+      matchPayment = paymentMethod === 'TIEN_MAT' || paymentMethod === 'CASH' || paymentMethod === 'TIỀN MẶT';
+    } else if (filterPayment === 'card') {
+      matchPayment = paymentMethod === 'MOMO' || paymentMethod === 'CARD' || paymentMethod === 'CHUYỂN KHOẢN' || paymentMethod === 'CHUYEN_KHOAN';
+    }
+    
     return matchSearch && matchStatus && matchPayment;
   });
 
@@ -831,15 +1074,8 @@ Nhân viên: ${staff?.name || 'N/A'}
               className="btn btn-primary"
               onClick={() => setShowReportModal(true)}
             >
-              <TrendingUp className="me-1" size={16} />
-              Báo cáo
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowVoucherModal(true)}
-            >
-              <Gift className="me-1" size={16} />
-              Voucher
+              <FileText className="me-1" size={16} />
+              Xuất báo cáo
             </button>
           </div>
         </div>
@@ -1577,10 +1813,10 @@ Nhân viên: ${staff?.name || 'N/A'}
               <div className="modal-footer">
                 <button 
                   className="btn btn-primary"
-                  onClick={() => showNotificationMsg('Chức năng xuất báo cáo chưa được triển khai!', 'info')}
+                  onClick={handlePrintReport}
                 >
-                  <Download className="me-1" size={16} />
-                  Xuất báo cáo
+                  <FileText className="me-1" size={16} />
+                  In báo cáo
                 </button>
                 <button 
                   className="btn btn-secondary"

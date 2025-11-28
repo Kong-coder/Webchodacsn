@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { showToast } from "./Toast";
+import { showConfirm } from "./ConfirmModal";
 
 const Header = () => {
   const location = useLocation();
@@ -147,7 +149,7 @@ const Header = () => {
       // Update state
       setUserInfo(updatedUserInfo);
 
-      alert("Cập nhật thông tin thành công!");
+      showToast("Cập nhật thông tin thành công!", "success");
       closeProfileModal();
 
       // Trigger event để header cập nhật
@@ -155,7 +157,7 @@ const Header = () => {
 
     } catch (error) {
       console.error('Profile update error:', error);
-      alert(`Lỗi khi cập nhật thông tin: ${error.message}`);
+      showToast(`Lỗi khi cập nhật thông tin: ${error.message}`, "error");
     }
   };
 
@@ -167,18 +169,18 @@ const Header = () => {
     e.preventDefault();
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp!");
+      showToast("Mật khẩu xác nhận không khớp!", "warning");
       return;
     }
 
     if (passwordForm.newPassword.length < 6) {
-      alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      showToast("Mật khẩu mới phải có ít nhất 6 ký tự!", "warning");
       return;
     }
 
     // Simulate API call
     setTimeout(() => {
-      alert("Đổi mật khẩu thành công!");
+      showToast("Đổi mật khẩu thành công!", "success");
       closeChangePasswordModal();
     }, 1000);
   };
@@ -189,7 +191,7 @@ const Header = () => {
 
     // Simulate API call
     setTimeout(() => {
-      alert("Cập nhật cài đặt thành công!");
+      showToast("Cập nhật cài đặt thành công!", "success");
       closeSettingsModal();
     }, 1000);
   };
@@ -425,8 +427,9 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+  const handleLogout = async () => {
+    const confirmed = await showConfirm("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất");
+    if (confirmed) {
       localStorage.removeItem("userToken");
       localStorage.removeItem("userInfo");
       sessionStorage.removeItem("userInfo");
@@ -435,7 +438,7 @@ const Header = () => {
       setHeaderType("guest");
       setUserInfo(null);
 
-      alert("Đăng xuất thành công!");
+      showToast("Đăng xuất thành công!", "success");
       navigate("/LoginPage");
     }
     setShowUserDropdown(false);

@@ -60,6 +60,12 @@ public class DatLichServiceImpl implements DatLichService {
             throw new IllegalArgumentException("Thời gian bắt đầu và kết thúc không được để trống");
         }
         
+        // Validate không cho phép đặt lịch trong quá khứ
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (request.getThoiGianBatDau().isBefore(now)) {
+            throw new IllegalArgumentException("Không thể đặt lịch trong quá khứ. Vui lòng chọn thời gian từ hiện tại trở đi.");
+        }
+        
         // Check if booking is for service or combo
         boolean isComboBooking = request.getComboId() != null || request.getGoiDichVuId() != null;
         Long comboId = request.getComboId() != null ? request.getComboId() : request.getGoiDichVuId();
@@ -223,7 +229,8 @@ public class DatLichServiceImpl implements DatLichService {
         }
         
         lichHen.setTrangThai("DA_HUY");
-        lichHen.setGhiChu(lyDo + "\n" + lichHen.getGhiChu());
+        // Thay thế hoàn toàn ghi chú cũ bằng lý do hủy của khách hàng
+        lichHen.setGhiChu("Khách hàng hủy: " + lyDo);
         lichHenRepository.save(lichHen);
     }
     
@@ -445,11 +452,8 @@ public class DatLichServiceImpl implements DatLichService {
         }
         
         lichHen.setTrangThai("DA_HUY");
-        String ghiChuMoi = "Nhân viên từ chối: " + lyDo;
-        if (lichHen.getGhiChu() != null && !lichHen.getGhiChu().isEmpty()) {
-            ghiChuMoi = ghiChuMoi + "\n" + lichHen.getGhiChu();
-        }
-        lichHen.setGhiChu(ghiChuMoi);
+        // Thay thế hoàn toàn ghi chú cũ bằng lý do từ chối của nhân viên
+        lichHen.setGhiChu("Nhân viên từ chối: " + lyDo);
         lichHen.setNgayCapNhat(java.time.OffsetDateTime.now());
         lichHenRepository.save(lichHen);
     }
@@ -462,6 +466,14 @@ public class DatLichServiceImpl implements DatLichService {
         // Chỉ cho phép cập nhật nếu chưa hoàn thành hoặc đã hủy
         if ("HOAN_THANH".equals(lichHen.getTrangThai()) || "DA_HUY".equals(lichHen.getTrangThai())) {
             throw new IllegalStateException("Không thể cập nhật lịch hẹn đã hoàn thành hoặc đã hủy");
+        }
+        
+        // Validate không cho phép cập nhật lịch với thời gian trong quá khứ
+        if (request.getThoiGianBatDau() != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            if (request.getThoiGianBatDau().isBefore(now)) {
+                throw new IllegalArgumentException("Không thể cập nhật lịch với thời gian trong quá khứ. Vui lòng chọn thời gian từ hiện tại trở đi.");
+            }
         }
         
         // Cập nhật thông tin với timezone Việt Nam (+07:00)

@@ -35,8 +35,10 @@ public class RevenueServiceImpl implements RevenueService {
         
         // Get total transactions
         Long totalTransactions = hoaDonRepository.countByDateRange(startDate, endDate);
-        stats.setTotalTransactions(totalTransactions != null ? totalTransactions.intValue() : 0);
-        stats.setTotalBookings(totalTransactions != null ? totalTransactions.intValue() : 0); // Alias
+        int totalOrdersCount = totalTransactions != null ? totalTransactions.intValue() : 0;
+        stats.setTotalTransactions(totalOrdersCount);
+        stats.setTotalBookings(totalOrdersCount); // Alias
+        stats.setTotalOrders(totalOrdersCount); // Alias for frontend
         
         // Calculate average revenue per customer
         BigDecimal avgRevenue = BigDecimal.ZERO;
@@ -47,6 +49,13 @@ public class RevenueServiceImpl implements RevenueService {
             stats.setAverageRevenuePerCustomer(BigDecimal.ZERO);
         }
         stats.setAvgRevenuePerCustomer(avgRevenue); // Alias
+        
+        // Calculate average order value (revenue per order)
+        BigDecimal avgOrderValue = BigDecimal.ZERO;
+        if (totalOrdersCount > 0 && totalRevenue != null) {
+            avgOrderValue = totalRevenue.divide(new BigDecimal(totalOrdersCount), 2, RoundingMode.HALF_UP);
+        }
+        stats.setAvgOrderValue(avgOrderValue);
         
         // Calculate growth rate
         LocalDate previousPeriodStart = startDate.minus(ChronoUnit.DAYS.between(startDate, endDate) + 1, ChronoUnit.DAYS);

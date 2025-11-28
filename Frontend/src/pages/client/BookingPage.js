@@ -200,8 +200,15 @@ const BeautySpaBooking = () => {
             body: JSON.stringify(requestBody),
         });
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Booking failed');
+            let errorMessage = 'Đặt lịch thất bại';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                const errorText = await response.text();
+                errorMessage = errorText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
         const result = await response.json();
         console.log('Booking result:', result);
@@ -420,7 +427,26 @@ const BeautySpaBooking = () => {
                             </div>
                             <div className="col-lg-6">
                                 <h5 className="text-success mb-4">Chọn Thời Gian</h5>
-                                <div className="mb-4"><label className="form-label fw-semibold">Ngày *</label><input type="date" className="form-control form-control-lg" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} min={new Date().toISOString().split("T")[0]} /></div>
+                                <div className="mb-4">
+                                  <label className="form-label fw-semibold">Ngày *</label>
+                                  <input 
+                                    type="date" 
+                                    className="form-control form-control-lg" 
+                                    value={bookingDate} 
+                                    onChange={(e) => {
+                                      const selectedDate = new Date(e.target.value);
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      
+                                      if (selectedDate < today) {
+                                        showToast('Không thể chọn ngày trong quá khứ!', 'error');
+                                        return;
+                                      }
+                                      setBookingDate(e.target.value);
+                                    }} 
+                                    min={new Date().toISOString().split("T")[0]} 
+                                  />
+                                </div>
                                 <div className="mb-0">
                                     <label className="form-label fw-semibold mb-3">Giờ *</label>
                                     <div className="row g-2">

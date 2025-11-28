@@ -40,6 +40,9 @@ public class CustomerController {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @GetMapping
     public ResponseEntity<?> getCustomers(
@@ -62,35 +65,28 @@ public class CustomerController {
             VaiTro khachHangRole = vaiTroRepository.findById(1)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò Khách hàng"));
             
-            // Nếu có lọc trạng thái hoạt động
-            if (active != null) {
-                // Sử dụng searchEmployees với tham số includeCustomers = true để bao gồm cả khách hàng
-                List<NguoiDung> customers = nguoiDungRepository.searchEmployees(
-                    "KHACHHANG", // Lọc theo vai trò khách hàng
-                    active,      // Trạng thái hoạt động
-                    search,      // Từ khóa tìm kiếm
-                    true         // Bao gồm cả khách hàng
-                );
-                
-                // Phân trang thủ công vì searchEmployees trả về List
-                int start = (int) pageable.getOffset();
-                int end = Math.min((start + pageable.getPageSize()), customers.size());
-                Page<NguoiDung> customerPage = new org.springframework.data.domain.PageImpl<>(
-                    customers.subList(start, end), 
-                    pageable, 
-                    customers.size()
-                );
-                
-                return ResponseEntity.ok(customerPage.map(this::convertToDto));
-            }
-
-    
-            
+            // Lấy tất cả khách hàng theo vai trò
             Page<NguoiDung> customers = nguoiDungRepository.findByVaiTroAndSearch(
                 khachHangRole,
                 search,
                 pageable
             );
+            
+            // Filter theo VIP nếu có
+            if (vip != null) {
+                List<NguoiDung> filteredList = customers.getContent().stream()
+                    .filter(c -> c.isVip() == vip)
+                    .collect(Collectors.toList());
+                customers = new PageImpl<>(filteredList, pageable, filteredList.size());
+            }
+            
+            // Filter theo active nếu có
+            if (active != null) {
+                List<NguoiDung> filteredList = customers.getContent().stream()
+                    .filter(c -> c.isDangHoatDong() == active)
+                    .collect(Collectors.toList());
+                customers = new PageImpl<>(filteredList, pageable, filteredList.size());
+            }
             
             return ResponseEntity.ok(customers.map(this::convertToDto));
             
@@ -284,6 +280,44 @@ public class CustomerController {
         }
     }
     
+    @PutMapping("/{id}/preferences")
+    public ResponseEntity<?> updatePreferences(
+            @PathVariable Integer id,
+            @RequestBody com.example.demo.dto.CustomerPreferencesUpdate update) {
+        try {
+            return nguoiDungRepository.findById(id)
+                .map(customer -> {
+                    if (!customer.getVaiTro().getMaVaiTro().equals(1)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "Chỉ có thể cập nhật sở thích cho khách hàng"));
+                    }
+                    
+                    // Update favorite service if provided
+                    if (update.getFavoriteService() != null) {
+                        customer.setDichVuYeuThich(update.getFavoriteService());
+                    }
+                    
+                    // Update preferred staff if provided
+                    if (update.getPreferredStaff() != null) {
+                        customer.setNhanVienYeuThich(update.getPreferredStaff());
+                    }
+                    
+                    // Update notes if provided
+                    if (update.getNotes() != null) {
+                        customer.setGhiChu(update.getNotes());
+                    }
+                    
+                    NguoiDung updatedCustomer = nguoiDungRepository.save(customer);
+                    return ResponseEntity.ok(convertToDto(updatedCustomer));
+                })
+                .orElse(ResponseEntity.notFound().build());
+                
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Lỗi khi cập nhật sở thích khách hàng: " + e.getMessage()));
+        }
+    }
+    
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('QUANLY')")
     public ResponseEntity<?> deleteCustomer(@PathVariable Integer id) {
@@ -426,16 +460,50 @@ public class CustomerController {
         dto.put("avatar", avatar);
         
         dto.put("vip", nguoiDung.isVip());
-        dto.put("points", 0); // Default to 0, update if you have a points field
-        dto.put("visits", nguoiDung.getSoLanDen() != null ? nguoiDung.getSoLanDen() : 0);
-        dto.put("totalSpent", nguoiDung.getTongTienChiTieu() != null ? nguoiDung.getTongTienChiTieu().intValue() : 0);
-        dto.put("favoriteService", nguoiDung.getDichVuYeuThich() != null ? nguoiDung.getDichVuYeuThich() : "Chưa có");
-        dto.put("favoriteStaff", nguoiDung.getNhanVienYeuThich() != null ? nguoiDung.getNhanVienYeuThich() : "Chưa có");
+        
+        // Tính lượt đến = số lịch hẹn đã xác nhận (DA_XAC_NHAN, DANG_THUC_HIEN, HOAN_THANH)
+        int visits = 0;
+        try {
+            Long visitsCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM lichhen WHERE ma_khach_hang = (SELECT id FROM khach_hang WHERE ma_nguoi_dung = ?) AND trang_thai IN ('DA_XAC_NHAN', 'DANG_THUC_HIEN', 'HOAN_THANH')",
+                Long.class,
+                nguoiDung.getMaNguoiDung()
+            );
+            visits = visitsCount != null ? visitsCount.intValue() : 0;
+        } catch (Exception e) {
+            System.err.println("Error calculating visits for customer " + nguoiDung.getMaNguoiDung() + ": " + e.getMessage());
+        }
+        dto.put("visits", visits);
+        
+        // Tính điểm tích lũy = số lượt đến * 50 điểm
+        int points = visits * 50;
+        dto.put("points", points);
+        
+        // Tính chi tiêu = tổng thanh toán từ hóa đơn đã thanh toán
+        int totalSpent = 0;
+        try {
+            BigDecimal totalSpentBD = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(hd.tong_tien), 0) FROM hoadon hd " +
+                "JOIN lichhen lh ON hd.ma_lich_hen = lh.ma_lich_hen " +
+                "WHERE lh.ma_khach_hang = (SELECT id FROM khach_hang WHERE ma_nguoi_dung = ?) " +
+                "AND hd.trang_thai = 'paid'",
+                BigDecimal.class,
+                nguoiDung.getMaNguoiDung()
+            );
+            totalSpent = totalSpentBD != null ? totalSpentBD.intValue() : 0;
+        } catch (Exception e) {
+            System.err.println("Error calculating totalSpent for customer " + nguoiDung.getMaNguoiDung() + ": " + e.getMessage());
+        }
+        dto.put("totalSpent", totalSpent);
+        
+        dto.put("favoriteService", nguoiDung.getDichVuYeuThich());
+        dto.put("favoriteStaff", nguoiDung.getNhanVienYeuThich());
         dto.put("lastVisit", nguoiDung.getLanCuoiDen() != null ? nguoiDung.getLanCuoiDen().toString() : "Chưa đến");
         dto.put("birthday", nguoiDung.getNgaySinh() != null ? nguoiDung.getNgaySinh().toString() : null);
         dto.put("address", nguoiDung.getDiaChi());
         dto.put("notes", nguoiDung.getGhiChu());
         dto.put("active", nguoiDung.isDangHoatDong());
+        dto.put("createdDate", nguoiDung.getNgayTao() != null ? nguoiDung.getNgayTao().toString() : null);
         
         // Add empty history and promos arrays to match frontend structure
         dto.put("history", new ArrayList<>());

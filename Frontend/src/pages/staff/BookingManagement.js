@@ -10,6 +10,8 @@ export default function BookingManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
@@ -74,7 +76,10 @@ export default function BookingManagement() {
           price: booking.thanhTien || booking.tongTien || 0,
           discount: booking.giamGia || 0,
           status: mapStatus(booking.trangThai),
-          customerType: 'normal', // Default to normal, can be enhanced later
+          orderId: booking.orderId,
+          paymentMethod: booking.phuongThucThanhToan,
+          paymentStatus: booking.trangThaiHoaDon, // Trạng thái thanh toán từ hóa đơn
+          customerType: booking.khachHangVip ? 'vip' : 'normal', // Lấy từ backend
           visitCount: 1, // Default value, can be enhanced later
           requestType: null, // Can be enhanced later
           cancelReason: null,
@@ -135,6 +140,13 @@ export default function BookingManagement() {
   };
 
   const handleAction = async (id, action) => {
+    if (action === 'cancel') {
+      // Mở modal nhập lý do hủy
+      setShowModal(false);
+      setShowCancelModal(true);
+      return;
+    }
+
     try {
         const headers = getAuthHeaders();
         console.log('=== ACTION DEBUG ===');
@@ -146,11 +158,6 @@ export default function BookingManagement() {
         let response;
         if (action === 'confirm') {
             response = await fetch(`/api/dat-lich/${id}/xac-nhan`, {
-                method: 'PATCH',
-                headers: headers,
-            });
-        } else if (action === 'cancel') {
-            response = await fetch(`/api/dat-lich/${id}/tu-choi?lyDo=Nhân viên từ chối`, {
                 method: 'PATCH',
                 headers: headers,
             });
@@ -167,12 +174,41 @@ export default function BookingManagement() {
             throw new Error(errorText || 'Action failed');
         }
         
-        showNotificationMessage(action === 'confirm' ? 'Đã xác nhận lịch hẹn!' : 'Đã từ chối lịch hẹn!');
+        showNotificationMessage('Đã xác nhận lịch hẹn!');
         fetchBookings();
         setShowModal(false);
     } catch (error) {
         console.error(`Error performing action ${action}:`, error);
         showNotificationMessage(`Lỗi: ${error.message}`, 'error');
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelReason.trim()) {
+      showNotificationMessage('Vui lòng nhập lý do hủy!', 'error');
+      return;
+    }
+
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`/api/dat-lich/${selectedBooking.id}/tu-choi?lyDo=${encodeURIComponent(cancelReason)}`, {
+        method: 'PATCH',
+        headers: headers,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Cancel failed');
+      }
+      
+      showNotificationMessage('Đã từ chối lịch hẹn!');
+      fetchBookings();
+      setShowCancelModal(false);
+      setCancelReason('');
+      setSelectedBooking(null);
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+      showNotificationMessage(`Lỗi: ${error.message}`, 'error');
     }
   };
 
@@ -196,6 +232,26 @@ export default function BookingManagement() {
       showNotificationMessage(`Lỗi: ${error.message}`, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async (orderId) => {
+    try {
+      const response = await fetch(`/api/don-hang/${orderId}/hoa-don/xac-nhan-thanh-toan`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Xác nhận thanh toán thất bại');
+      }
+      
+      showNotificationMessage('Đã xác nhận thanh toán thành công!');
+      fetchBookings();
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      showNotificationMessage(`Lỗi: ${error.message}`, 'error');
     }
   };
 
@@ -225,7 +281,7 @@ export default function BookingManagement() {
         {/* Stats Cards */}
         <div className="row g-3 mb-4">
           {/* Chờ duyệt */}
-          <div className="col-md-2">
+          <div className="col-md-3">
             <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #ffc107' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
@@ -242,7 +298,7 @@ export default function BookingManagement() {
           </div>
 
           {/* Đã duyệt */}
-          <div className="col-md-2">
+          <div className="col-md-3">
             <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #28a745' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
@@ -259,7 +315,7 @@ export default function BookingManagement() {
           </div>
 
           {/* Đã hủy */}
-          <div className="col-md-2">
+          <div className="col-md-3">
             <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #dc3545' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
@@ -275,25 +331,8 @@ export default function BookingManagement() {
             </div>
           </div>
 
-          {/* Yêu cầu */}
-          <div className="col-md-2">
-            <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #17a2b8' }}>
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="text-muted mb-1 small">Yêu cầu</p>
-                    <h3 className="mb-0 fw-bold">{stats.changeRequests}</h3>
-                  </div>
-                  <div className="rounded-circle bg-info bg-opacity-10 p-3">
-                    <Edit size={24} className="text-info" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Khách VIP */}
-          <div className="col-md-2">
+          <div className="col-md-3">
             <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #ffc107', background: 'linear-gradient(135deg, #fff9e6 0%, #ffffff 100%)' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
@@ -303,23 +342,6 @@ export default function BookingManagement() {
                   </div>
                   <div className="rounded-circle p-3" style={{ background: 'linear-gradient(135deg, #ffd700 0%, #ffb300 100%)' }}>
                     <Crown size={24} className="text-white" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* VIP chờ */}
-          <div className="col-md-2">
-            <div className="card shadow-sm border-0" style={{ borderLeft: '4px solid #ff6b6b', background: 'linear-gradient(135deg, #fff0f0 0%, #ffffff 100%)' }}>
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="text-muted mb-1 small">VIP chờ</p>
-                    <h3 className="mb-0 fw-bold">{stats.vipPending}</h3>
-                  </div>
-                  <div className="rounded-circle p-3" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)' }}>
-                    <Star size={24} className="text-white" />
                   </div>
                 </div>
               </div>
@@ -539,9 +561,85 @@ export default function BookingManagement() {
                     </button>
                   </div>
                 )}
+                
+                {selectedBooking.status === 'confirmed' && 
+                 selectedBooking.paymentMethod === 'CASH' && 
+                 selectedBooking.paymentStatus !== 'paid' && 
+                 selectedBooking.orderId && (
+                  <div className="modal-footer">
+                    <button 
+                      className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" 
+                      onClick={() => handleConfirmPayment(selectedBooking.orderId)}
+                    >
+                      <CheckCircle size={18} />
+                      Xác nhận đã thanh toán tiền mặt
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+      )}
+
+      {/* Modal nhập lý do hủy */}
+      {showCancelModal && selectedBooking && <div className="modal-backdrop show"></div>}
+      {showCancelModal && selectedBooking && (
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title">Từ chối lịch hẹn</h5>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancelReason('');
+                    setSelectedBooking(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-3">
+                  Bạn đang từ chối lịch hẹn của <strong>{selectedBooking.customerName}</strong>
+                </p>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Lý do từ chối *</label>
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    placeholder="Nhập lý do từ chối lịch hẹn..."
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                  ></textarea>
+                  <small className="text-muted">Lý do này sẽ được gửi cho khách hàng</small>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancelReason('');
+                    setSelectedBooking(null);
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-danger" 
+                  onClick={handleConfirmCancel}
+                  disabled={!cancelReason.trim()}
+                >
+                  <XCircle size={18} className="me-2" />
+                  Xác nhận từ chối
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

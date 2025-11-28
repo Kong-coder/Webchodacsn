@@ -41,6 +41,7 @@ public class ThanhToanService {
     private final ServiceProductRepository serviceProductRepository;
     private final ProductRepository productRepository;
     private final LichHenRepository lichHenRepository;
+    private final com.example.demo.repository.KhachHangRepository khachHangRepository;
     private final RestTemplate http = new RestTemplate();
 
     @Value("${momo.partnerCode}")
@@ -60,13 +61,15 @@ public class ThanhToanService {
 
     public ThanhToanService(ThanhToanRepository thanhToanRepository, HoaDonRepository hoaDonRepository,
                             DonHangRepository donHangRepository, ServiceProductRepository serviceProductRepository,
-                            ProductRepository productRepository, LichHenRepository lichHenRepository) {
+                            ProductRepository productRepository, LichHenRepository lichHenRepository,
+                            com.example.demo.repository.KhachHangRepository khachHangRepository) {
         this.thanhToanRepository = thanhToanRepository;
         this.hoaDonRepository = hoaDonRepository;
         this.donHangRepository = donHangRepository;
         this.serviceProductRepository = serviceProductRepository;
         this.productRepository = productRepository;
         this.lichHenRepository = lichHenRepository;
+        this.khachHangRepository = khachHangRepository;
     }
 
     @Transactional
@@ -170,6 +173,22 @@ public class ThanhToanService {
         hoaDonRepository.save(hd);
         System.out.println("--> [ThanhToanService] Invoice " + hd.getMaHoaDon() + " status updated to PAID.");
         
+        // Cộng điểm tích lũy cho khách hàng (50 điểm/đơn)
+        if (hd.getMaKhachHang() != null) {
+            System.out.println("--> [ThanhToanService] Adding loyalty points for customer ID: " + hd.getMaKhachHang());
+            try {
+                khachHangRepository.findById(Long.valueOf(hd.getMaKhachHang())).ifPresent(khachHang -> {
+                    khachHang.tangDiemTichLuy(50); // Cộng 50 điểm cho mỗi đơn hàng
+                    khachHang.capNhatChiTieu(hd.getTongTien()); // Cập nhật tổng chi tiêu
+                    khachHang.tangSoLanDen(); // Tăng số lần đến
+                    khachHangRepository.save(khachHang);
+                    System.out.println("--> [ThanhToanService] Added 50 points to customer. New total: " + khachHang.getDiemTichLuy());
+                });
+            } catch (Exception e) {
+                System.err.println("--> [ThanhToanService] Error adding points: " + e.getMessage());
+            }
+        }
+        
         // Deduct products for services in this invoice
         System.out.println("--> [ThanhToanService] Calling deductProductsForInvoice...");
         deductProductsForInvoice(hoaDonId);
@@ -253,6 +272,20 @@ public class ThanhToanService {
             tt.setTrangThai("success");
             hd.setTrangThai("paid");
             hoaDonRepository.save(hd);
+            
+            // Cộng điểm tích lũy cho khách hàng (50 điểm/đơn)
+            if (hd.getMaKhachHang() != null) {
+                try {
+                    khachHangRepository.findById(Long.valueOf(hd.getMaKhachHang())).ifPresent(khachHang -> {
+                        khachHang.tangDiemTichLuy(50); // Cộng 50 điểm cho mỗi đơn hàng
+                        khachHang.capNhatChiTieu(hd.getTongTien()); // Cập nhật tổng chi tiêu
+                        khachHang.tangSoLanDen(); // Tăng số lần đến
+                        khachHangRepository.save(khachHang);
+                    });
+                } catch (Exception e) {
+                    System.err.println("--> [ThanhToanService] Error adding points via MoMo: " + e.getMessage());
+                }
+            }
             
             // Deduct products for services in this invoice
             deductProductsForInvoice(hoaDonId);
